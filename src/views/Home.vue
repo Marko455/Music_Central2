@@ -12,12 +12,17 @@
           class="song-card"
         />
       </v-row>
+      <!--<ul>
+        <li v-for"doc in posts">{{ doc.description }}</li>
+      </ul>-->
     </div>
   </v-container>
 </template>
 
 <script>
 import SongCard from '@/components/SongCard.vue';
+import { db } from '@/firebase.js'; // importanje firebase baze
+import { collection, getDocs } from "firebase/firestore"; // importanje kolekcije
 export default {
   name: 'Home',
   components: {
@@ -25,6 +30,7 @@ export default {
   },
   data() {
     return {
+      posts: [],
       songs: [
         {
           id: 1,
@@ -49,10 +55,21 @@ export default {
         }
       ]
     };
+  },
+  async mounted(){
+    const posts_collection = collection(db, "posts");
+    const query = await getDocs(posts_collection);
+
+    query.forEach((doc)=> {
+      const id = doc.id;
+      const data = doc.data;
+      console.log(data);
+
+      this.posts.push(data);
+    })
   }
 }
 </script>
-
 
 <style scoped>
 .home-container {
