@@ -3,8 +3,15 @@
     <div class="background">
       <h1 class="welcome-text">Dobrodošli na Music Central!</h1>
 
+      <!-- Loading Indicator -->
+      <v-progress-circular
+        v-if="loading"
+        indeterminate
+        color="primary">
+      </v-progress-circular>
+
       <!-- Songs list -->
-      <v-row class="songs-row">
+      <v-row v-else class="songs-row">
         <song-card
           v-for="song in songs"
           :key="song.id"
@@ -12,17 +19,15 @@
           class="song-card"
         />
       </v-row>
-      <!--<ul>
-        <li v-for"doc in posts">{{ doc.description }}</li>
-      </ul>-->
     </div>
   </v-container>
 </template>
 
 <script>
 import SongCard from '@/components/SongCard.vue';
-import { db } from '@/firebase.js'; // importanje firebase baze
-import { collection, getDocs } from "firebase/firestore"; // importanje kolekcije
+import { db } from '@/firebase.js';
+import { collection, getDocs } from "firebase/firestore";
+
 export default {
   name: 'Home',
   components: {
@@ -30,46 +35,29 @@ export default {
   },
   data() {
     return {
-      posts: [],
-      songs: [
-        {
-          id: 1,
-          title: 'Song Title 1',
-          artist: 'Artist Name 1',
-          album: 'Album Title 1',
-          video: 'https://www.example.com/song1.mp4'
-        },
-        {
-          id: 2,
-          title: 'Song Title 2',
-          artist: 'Artist Name 2',
-          album: 'Album Title 2',
-          video: 'https://www.example.com/song2.mp4'
-        },
-        {
-          id: 3,
-          title: 'Song Title 3',
-          artist: 'Artist Name 3',
-          album: 'Album Title 3',
-          video: 'https://www.example.com/song3.mp4'
-        }
-      ]
+      songs: [],
+      loading: true
     };
   },
-  async mounted(){
-    const posts_collection = collection(db, "posts");
-    const query = await getDocs(posts_collection);
+  async mounted() {
+    try {
+      const songsCollection = collection(db, "Songs");
+      const querySnapshot = await getDocs(songsCollection);
 
-    query.forEach((doc)=> {
-      const id = doc.id;
-      const data = doc.data;
-      console.log(data);
-
-      this.posts.push(data);
-    })
+      this.songs = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      this.loading = false;
+    } catch (error) {
+      console.error("Error fetching songs:", error);
+      this.loading = false;
+    }
   }
 }
 </script>
+
+
 
 <style scoped>
 .home-container {
