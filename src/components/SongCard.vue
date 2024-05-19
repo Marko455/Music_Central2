@@ -30,7 +30,6 @@ export default {
   methods: {
     playSong(songId) {
       console.log(`Playing song with ID: ${songId}`);
-      // Implement further functionality to play the song
     }
   }
 }

@@ -3,7 +3,6 @@
     <div class="background">
       <h1 class="welcome-text">Dobrodošli na Music Central!</h1>
 
-      <!-- Loading Indicator -->
       <v-progress-circular
         v-if="loading"
         indeterminate

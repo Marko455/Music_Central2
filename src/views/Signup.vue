@@ -50,11 +50,9 @@
     name: 'Signup',
     methods: {
       signup() {
-        // Perform signup logic
         alert('Signup attempt... (implement logic)');
       },
       clear() {
-        // Clear form fields
         this.$router.push('/');
       }
     }
@@ -62,6 +60,5 @@
   </script>
   
   <style>
-  /* Add any additional styling here */
   </style>
   

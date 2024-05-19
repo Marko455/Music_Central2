@@ -83,10 +83,9 @@
   </script>
   
   <style scoped>
-  /* Existing styles remain here */
   
   .v-card {
-    margin-top: 20px; /* Added space between sections */
+    margin-top: 20px;
   }
   
   .v-card-title {

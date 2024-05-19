@@ -1,25 +1,14 @@
 <template>
   <v-app>
-    <!-- App bar with collapse button -->
+    <!-- App collapse bar button -->
     <v-app-bar app color="#c945d7ac" dark>
       <v-btn icon @click="drawer = !drawer">
         <v-icon>mdi-menu</v-icon>
       </v-btn>
       <v-toolbar-title class="toolbar-title">Music Central</v-toolbar-title>
       <v-spacer></v-spacer>
-      
-      <!-- Search bar -->
-      <v-text-field
-        v-model="search"
-        append-icon="mdi-magnify"
-        label="Search"
-        single-line
-        hide-details
-        class="search-bar"
-      ></v-text-field>
-      
-      <v-btn to="/" text class="toolbar-button">Home</v-btn>
-      <v-btn to="/login" text class="toolbar-button">Login</v-btn>
+      <v-btn v-if="user" text class="toolbar-button">{{ user.displayName || user.email }}</v-btn>
+      <v-btn v-else to="/login" text class="toolbar-button">Login</v-btn>
       <v-btn to="/signup" text class="toolbar-button">Signup</v-btn>
     </v-app-bar>
 
@@ -46,25 +35,33 @@
 </template>
 
 <script>
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/firebase.js';
+import { store } from '@/store.js';
+
 export default {
   name: 'App',
   data() {
     return {
-      drawer: false, // Initially, sidebar is hidden
-      search: '' // Search query
-    }
+      drawer: false,
+      user: store.user,
+    };
   },
-  watch: {
-    search(newQuery) {
-      // Handle search query changes (e.g., fetch search results)
-      console.log('Search query:', newQuery);
-    }
-  }
-}
+  created() {
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        store.setUser(user);
+        this.user = user;
+      } else {
+        store.setUser(null);
+        this.user = null;
+      }
+    });
+  },
+};
 </script>
 
 <style scoped>
-/* App bar styling */
 .toolbar-title {
   font-size: 24px;
 }
@@ -76,52 +73,14 @@ export default {
 
 .toolbar-button:hover,
 .toolbar-button:focus {
-  background-color: #ff69b4; /* Change to a lighter pink color on hover/focus */
-  color: #fff; /* Change to white color on hover/focus */
+  background-color: #ff69b4; 
+  color: #fff; 
 }
 
-/* Search bar styling */
-.search-bar {
-  max-width: 300px;
-  margin-right: 330px;
-  border-radius: 20px;
-  background-color: rgba(255, 255, 255, 0.1);
-  color: white;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-.search-bar .v-input__control {
-  color: rgb(34, 173, 220);
-}
-
-.search-bar .v-input__control .v-field__input {
-  color: white;
-}
-
-.search-bar .v-input__control .v-field__details {
-  display: none;
-}
-
-.search-bar .v-input__control .v-label {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.search-bar .v-input__control .v-input__append-inner .v-icon {
-  color: white;
-}
-
-.search-bar:hover,
-.search-bar:focus-within {
-  background-color: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-}
-
-/* Sidebar styling */
 .sidebar-button {
   font-weight: bold;
 }
 
-/* Footer styling */
 .footer {
   background-color: #c945d7ac;
   color: #fff;
@@ -132,5 +91,26 @@ export default {
 .footer-text {
   font-size: 14px;
 }
+
+.search-bar {
+  max-width: 300px;
+  margin-right: 330px;
+  transition: box-shadow 0.3s;
+}
+
+.search-bar .v-text-field__slot::before {
+  border-bottom: none;
+}
+
+.search-bar .v-input__control {
+  border: 1px solid #c945d7ac;
+  border-radius: 4px;
+}
+
+.search-bar .v-input__control:hover,
+.search-bar .v-input__control:focus-within {
+  box-shadow: 0 0 10px #c945d7ac;
+}
 </style>
+
 
