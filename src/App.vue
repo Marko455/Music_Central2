@@ -1,15 +1,18 @@
 <template>
   <v-app>
-    <!-- App collapse bar button -->
+    <!-- App collapse bar-->
     <v-app-bar app color="#c945d7ac" dark>
       <v-btn icon @click="drawer = !drawer">
         <v-icon>mdi-menu</v-icon>
       </v-btn>
-      <v-toolbar-title class="toolbar-title">Music Central</v-toolbar-title>
+      <router-link to="/" class="toolbar-title-link">
+        <v-toolbar-title class="toolbar-title">Music Central</v-toolbar-title>
+      </router-link>
       <v-spacer></v-spacer>
       <v-btn v-if="user" text class="toolbar-button">{{ user.displayName || user.email }}</v-btn>
       <v-btn v-else to="/login" text class="toolbar-button">Login</v-btn>
       <v-btn to="/signup" text class="toolbar-button">Signup</v-btn>
+      <v-btn v-if="user" text class="toolbar-button" @click="logout">Logout</v-btn>
     </v-app-bar>
 
     <!-- Sidebar -->
@@ -35,7 +38,7 @@
 </template>
 
 <script>
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '@/firebase.js';
 import { store } from '@/store.js';
 
@@ -58,12 +61,30 @@ export default {
       }
     });
   },
+  methods: {
+    async logout() {
+      try {
+        await signOut(auth);
+        store.setUser(null);
+        this.user = null;
+        this.$router.push('/login');
+      } catch (error) {
+        console.error('Error logging out:', error);
+      }
+    },
+  },
 };
 </script>
 
 <style scoped>
 .toolbar-title {
   font-size: 24px;
+  cursor: pointer;
+}
+
+.toolbar-title-link {
+  text-decoration: none;
+  color: inherit;
 }
 
 .toolbar-button {
@@ -73,8 +94,8 @@ export default {
 
 .toolbar-button:hover,
 .toolbar-button:focus {
-  background-color: #ff69b4; 
-  color: #fff; 
+  background-color: #ff69b4;
+  color: #fff;
 }
 
 .sidebar-button {
@@ -112,5 +133,3 @@ export default {
   box-shadow: 0 0 10px #c945d7ac;
 }
 </style>
-
-
