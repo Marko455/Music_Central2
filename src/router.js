@@ -2,14 +2,13 @@
 
 import { createRouter, createWebHistory } from 'vue-router'
 
-// Import components
 import Home from './views/Home.vue'
 import About from './views/About.vue'
 import Login from './views/Login.vue'
 import Signup from './views/Signup.vue'
 import Profile from './views/Profile.vue'
+import CreateSong from './views/CreateSong.vue';
 
-// Define routes
 const routes = [
   {
     path: '/',
@@ -35,10 +34,14 @@ const routes = [
     path: '/profile',
     name: 'Profile',
     component: Profile
+  },
+  {
+    path: '/create',
+    name: 'CreateSong',
+    component: CreateSong
   }
 ]
 
-// Create router instance
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes

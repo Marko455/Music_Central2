@@ -9,7 +9,7 @@
         color="primary">
       </v-progress-circular>
 
-      <!-- Songs list -->
+      <!-- Lista pjesama -->
       <v-row v-else class="songs-row">
         <song-card
           v-for="song in songs"
@@ -18,14 +18,26 @@
           class="song-card"
         />
       </v-row>
+
+      <!-- Plus botun -->
+      <v-btn 
+        v-if="user" 
+        class="fab" 
+        color="primary" 
+        dark 
+        fab 
+        @click="createNewContent">
+        <v-icon>mdi-plus</v-icon>
+      </v-btn>
     </div>
   </v-container>
 </template>
-
 <script>
 import SongCard from '@/components/SongCard.vue';
 import { db } from '@/firebase.js';
 import { collection, getDocs } from "firebase/firestore";
+import { auth } from '@/firebase.js';
+import { onAuthStateChanged } from 'firebase/auth';
 
 export default {
   name: 'Home',
@@ -35,7 +47,8 @@ export default {
   data() {
     return {
       songs: [],
-      loading: true
+      loading: true,
+      user: null
     };
   },
   async mounted() {
@@ -52,12 +65,18 @@ export default {
       console.error("Error fetching songs:", error);
       this.loading = false;
     }
+
+    onAuthStateChanged(auth, (user) => {
+      this.user = user;
+    });
+  },
+  methods: {
+    createNewContent() {
+      this.$router.push('/create');
+    }
   }
 }
 </script>
-
-
-
 <style scoped>
 .home-container {
   padding: 20px;
@@ -98,7 +117,17 @@ export default {
   transform: translateY(-5px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
+
+.fab {
+  position: fixed;
+  bottom: 50px;
+  right: 24px;
+  z-index: 1000;
+  width: 70px;
+  height: 70px;
+}
+
+.fab v-icon {
+  font-size: 36px;
+}
 </style>
-
-
-  
