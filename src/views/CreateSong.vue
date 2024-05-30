@@ -55,7 +55,7 @@
 </template>
 <script>
 import { db } from '@/firebase.js';
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, Timestamp } from "firebase/firestore";
 
 export default {
   name: 'CreateSong',
@@ -64,10 +64,15 @@ export default {
       song: {
         album: '',
         artist: '',
+        creatorID: '',
         genre: '',
         title: '',
         video: '',
-        description: ''
+        description: '',
+        likes: 0,
+        dislikes: 0,
+        popularity: 0,
+        releaseDate: Date.now()
       }
     };
   },
@@ -84,10 +89,15 @@ export default {
       this.song = {
         album: '',
         artist: '',
+        creatorID: '',
         genre: '',
         title: '',
         video: '',
-        description: ''
+        description: '',
+        likes: '',
+        dislikes: '',
+        popularity: '',
+        releaseDate: ''
       };
     }
   }

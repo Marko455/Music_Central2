@@ -9,6 +9,18 @@
             <v-card-text>
               <v-form>
                 <v-text-field
+                  label="Ime:"
+                  name="first_name"
+                  prepend-icon="mdi-account"
+                  type="text"
+                ></v-text-field>
+                <v-text-field
+                  label="Prezime:"
+                  name="last_name"
+                  prepend-icon="mdi-account"
+                  type="text"
+                ></v-text-field>
+                <v-text-field
                   label="Korisničko ime:"
                   name="username"
                   prepend-icon="mdi-account"
