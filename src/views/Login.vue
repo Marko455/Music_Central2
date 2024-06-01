@@ -38,8 +38,10 @@
 <script>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { auth } from '@/firebase.js';
+import { auth, db } from '@/firebase.js';
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { store } from '@/store.js'; // Adjust based on your actual store location
 
 export default {
   name: 'Login',
@@ -48,9 +50,35 @@ export default {
     const password = ref('');
     const router = useRouter();
 
+    const fetchUserDetails = async (uid) => {
+      try {
+        const userDocRef = doc(db, 'Users', uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          return userDoc.data();
+        } else {
+          console.log("No such document!");
+          return null;
+        }
+      } catch (error) {
+        console.error("Error fetching user document:", error);
+        return null;
+      }
+    };
+
     const login = async () => {
       try {
-        await signInWithEmailAndPassword(auth, email.value, password.value);
+        const userCredential = await signInWithEmailAndPassword(auth, email.value, password.value);
+        const user = userCredential.user;
+        const userDetails = await fetchUserDetails(user.uid);
+
+        if (userDetails) {
+          store.setUser({
+            uid: user.uid,
+            ...userDetails,
+          });
+        }
+
         router.push('/');
       } catch (error) {
         alert('Login failed: ' + error.message);
@@ -75,5 +103,3 @@ export default {
 
 <style scoped>
 </style>
-
-  

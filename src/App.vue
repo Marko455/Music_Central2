@@ -9,7 +9,7 @@
         <v-toolbar-title class="toolbar-title">Music Central</v-toolbar-title>
       </router-link>
       <v-spacer></v-spacer>
-      <v-btn v-if="user" text class="toolbar-button">{{ user.displayName || user.email }}</v-btn>
+      <v-btn v-if="user" text class="toolbar-button">{{ username }}</v-btn>
       <v-btn v-else to="/login" text class="toolbar-button">Login</v-btn>
       <v-btn to="/signup" text class="toolbar-button">Signup</v-btn>
       <v-btn v-if="user" text class="toolbar-button" @click="logout">Logout</v-btn>
@@ -39,7 +39,8 @@
 
 <script>
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { auth } from '@/firebase.js';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from '@/firebase.js';
 import { store } from '@/store.js';
 
 export default {
@@ -47,26 +48,46 @@ export default {
   data() {
     return {
       drawer: false,
-      user: store.user,
+      user: null,
+      username: '',
     };
   },
   created() {
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
       if (user) {
+        const userDoc = await this.fetchUserDetails(user.uid);
         store.setUser(user);
         this.user = user;
+        this.username = userDoc?.username || user.email;
       } else {
         store.setUser(null);
         this.user = null;
+        this.username = '';
       }
     });
   },
   methods: {
+    async fetchUserDetails(uid) {
+      try {
+        const userDocRef = doc(db, 'Users', uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          return userDoc.data();
+        } else {
+          console.log("No such document!");
+          return null;
+        }
+      } catch (error) {
+        console.error("Error fetching user document:", error);
+        return null;
+      }
+    },
     async logout() {
       try {
         await signOut(auth);
         store.setUser(null);
         this.user = null;
+        this.username = '';
         this.$router.push('/login');
       } catch (error) {
         console.error('Error logging out:', error);
