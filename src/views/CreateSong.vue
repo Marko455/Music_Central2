@@ -71,7 +71,7 @@ export default {
         description: '',
         likes: 0,
         dislikes: 0,
-        popularity: 0,
+        views: 0,
         releaseDate: Date.now()
       }
     };
@@ -96,7 +96,7 @@ export default {
         description: '',
         likes: '',
         dislikes: '',
-        popularity: '',
+        views: '',
         releaseDate: ''
       };
     }
