@@ -16,9 +16,29 @@
       </v-card-text>
       <v-card-actions>
         <v-btn color="primary" text @click="playSong(song.id)">Play</v-btn>
-        <v-btn color="success" text @click="likeSong">Like</v-btn>
-        <v-btn color="error" text @click="dislikeSong">Dislike</v-btn>
+        <v-btn color="success" text @click="handleLikeDislike('like')">Like</v-btn>
+        <v-btn color="error" text @click="handleLikeDislike('dislike')">Dislike</v-btn>
       </v-card-actions>
+      <!-- Komentari -->
+      <v-divider></v-divider>
+      <v-card-text>
+        <div class="comments-section">
+          <v-textarea
+            v-model="newComment"
+            label="Add a comment"
+            auto-grow
+            clearable
+          ></v-textarea>
+          <v-btn color="primary" text @click="handlePostComment">Post Comment</v-btn>
+          <div v-if="comments.length" class="comments-list">
+            <div v-for="(comment, index) in comments" :key="index" class="comment">
+              <div class="comment-user">{{ comment.user }}</div>
+              <div class="comment-text">{{ comment.text }}</div>
+              <v-divider></v-divider>
+            </div>
+          </div>
+        </div>
+      </v-card-text>
     </v-card>
   </v-col>
 </template>
@@ -34,6 +54,19 @@ export default {
     song: {
       type: Object,
       required: true
+    }
+  },
+  data() {
+    return {
+      newComment: '',
+      comments: [
+        { user: 'User1', text: 'Super pjesma!' },
+      ]
+    };
+  },
+  computed: {
+    user() {
+      return store.getUser();
     }
   },
   methods: {
@@ -53,10 +86,6 @@ export default {
       }
     },
     async likeSong() {
-      if (!store.getUser()) {
-        alert('Please log in to like songs.');
-        return;
-      }
       try {
         const songRef = doc(db, 'Songs', this.song.id);
         await updateDoc(songRef, {
@@ -68,10 +97,6 @@ export default {
       }
     },
     async dislikeSong() {
-      if (!store.getUser()) {
-        alert('Please log in to dislike songs.');
-        return;
-      }
       try {
         const songRef = doc(db, 'Songs', this.song.id);
         await updateDoc(songRef, {
@@ -81,6 +106,28 @@ export default {
       } catch (error) {
         console.error('Error disliking song:', error);
       }
+    },
+    handleLikeDislike(action) {
+      if (!this.user) {
+        alert('Please login for dis/liking and commenting');
+        return;
+      }
+      if (action === 'like') {
+        this.likeSong();
+      } else if (action === 'dislike') {
+        this.dislikeSong();
+      }
+    },
+    handlePostComment() {
+      if (!this.user) {
+        alert('Please login for dis/liking and commenting');
+        return;
+      }
+      this.postComment();
+    },
+    postComment() {
+      // Dodani funkcionalnost
+      console.log(`Posting comment: ${this.newComment}`);
     }
   }
 }
@@ -114,5 +161,25 @@ export default {
 
 .video {
   width: 100%;
+}
+
+.comments-section {
+  margin-top: 16px;
+}
+
+.comments-list {
+  margin-top: 16px;
+}
+
+.comment {
+  margin-bottom: 16px;
+}
+
+.comment-user {
+  font-weight: bold;
+}
+
+.comment-text {
+  margin-top: 4px;
 }
 </style>
