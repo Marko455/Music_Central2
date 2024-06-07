@@ -1,6 +1,6 @@
 <template>
   <v-app>
-    <!-- App collapse bar-->
+    <!-- App collapse bar -->
     <v-app-bar app color="#c945d7ac" dark>
       <v-btn icon @click="drawer = !drawer">
         <v-icon>mdi-menu</v-icon>
@@ -11,7 +11,7 @@
       <v-spacer></v-spacer>
       <v-btn v-if="user" text class="toolbar-button">{{ username }}</v-btn>
       <v-btn v-else to="/login" text class="toolbar-button">Login</v-btn>
-      <v-btn to="/signup" text class="toolbar-button">Signup</v-btn>
+      <v-btn v-if="!user" to="/signup" text class="toolbar-button">Signup</v-btn>
       <v-btn v-if="user" text class="toolbar-button" @click="logout">Logout</v-btn>
     </v-app-bar>
 
@@ -39,7 +39,7 @@
 
 <script>
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '@/firebase.js';
 import { store } from '@/store.js';
 
@@ -55,7 +55,7 @@ export default {
   created() {
     onAuthStateChanged(auth, async (user) => {
       if (user) {
-        const userDoc = await this.fetchUserDetails(user.uid);
+        const userDoc = await this.fetchUserDetails(user.email);
         store.setUser(user);
         this.user = user;
         this.username = userDoc?.username || user.email;
@@ -67,11 +67,13 @@ export default {
     });
   },
   methods: {
-    async fetchUserDetails(uid) {
+    async fetchUserDetails(email) {
       try {
-        const userDocRef = doc(db, 'Users', uid);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
+        const usersCollection = collection(db, 'Users');
+        const q = query(usersCollection, where('email', '==', email));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          const userDoc = querySnapshot.docs[0];
           return userDoc.data();
         } else {
           console.log("No such document!");
