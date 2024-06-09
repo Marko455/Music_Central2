@@ -18,8 +18,8 @@
         <v-btn color="primary" text @click="playSong(song.id)">Play</v-btn>
         <v-btn color="success" text @click="handleLikeDislike('like')">Like</v-btn>
         <v-btn color="error" text @click="handleLikeDislike('dislike')">Dislike</v-btn>
+        <v-btn color="red" text @click="handleDelete">Delete</v-btn>
       </v-card-actions>
-      <!-- Komentari -->
       <v-divider></v-divider>
       <v-card-text>
         <div class="comments-section">
@@ -45,7 +45,7 @@
 
 <script>
 import { db } from '@/firebase.js';
-import { doc, updateDoc, increment } from 'firebase/firestore';
+import { doc, deleteDoc, updateDoc, increment } from 'firebase/firestore';
 import { store } from '@/store.js';
 
 export default {
@@ -126,8 +126,30 @@ export default {
       this.postComment();
     },
     postComment() {
-      // Dodani funkcionalnost
       console.log(`Posting comment: ${this.newComment}`);
+    },
+    handleDelete() {
+      if (!this.user) {
+        alert('Please login to delete songs');
+        return;
+      }
+      if (this.user.email !== this.song.artist) {
+        alert('You can only delete your own songs');
+        return;
+      }
+      this.deleteSong();
+    },
+    async deleteSong() {
+      if (confirm('Are you sure you want to delete this song?')) {
+        try {
+          await deleteDoc(doc(db, 'Songs', this.song.id));
+          alert('Song deleted successfully.');
+          this.$emit('songDeleted', this.song.id);
+        } catch (error) {
+          console.error('Error deleting song:', error);
+          alert('Failed to delete the song.');
+        }
+      }
     }
   }
 }

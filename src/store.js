@@ -8,6 +8,9 @@ export const store = reactive({
   setUser(user) {
     this.user = user;
   },
+  getUser() {
+    return this.state.user;
+  },
 
   clearUser() {
     this.user = null;

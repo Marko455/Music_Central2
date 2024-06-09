@@ -62,9 +62,11 @@
     </v-row>
   </v-container>
 </template>
+
 <script>
-import { db } from '@/firebase.js';
-import { collection, addDoc} from "firebase/firestore";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { db, auth } from '@/firebase.js';
+import { collection, addDoc } from "firebase/firestore";
 
 export default {
   name: 'Signup',
@@ -86,20 +88,26 @@ export default {
         alert('Passwords do not match!');
         return;
       }
-      
-      const newUser = {
-        firstName: this.user.firstName,
-        lastName: this.user.lastName,
-        username: this.user.username,
-        email: this.user.email,
-        password: this.user.password
-      };
 
       try {
-        await addDoc(collection(db, "Users"), newUser);
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          this.user.email,
+          this.user.password
+        );
+        const firebaseUser = userCredential.user;
+
+        await addDoc(collection(db, "Users"), {
+          firstName: this.user.firstName,
+          lastName: this.user.lastName,
+          username: this.user.username,
+          email: this.user.email,
+          uid: firebaseUser.uid
+        });
+
         this.$router.push('/');
       } catch (error) {
-        console.error("Error adding document: ", error);
+        console.error("Error during sign up: ", error);
       }
     },
     clear() {
@@ -116,6 +124,7 @@ export default {
   }
 }
 </script>
+
 <style scoped>
 .create-song-container {
   padding: 20px;

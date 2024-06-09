@@ -41,7 +41,7 @@ import { useRouter } from 'vue-router';
 import { auth, db } from '@/firebase.js';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import { store } from '@/store.js'; // Adjust based on your actual store location
+import { store } from '@/store.js';
 
 export default {
   name: 'Login',
