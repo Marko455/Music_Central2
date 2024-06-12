@@ -1,6 +1,5 @@
 <template>
   <v-container>
-    <!-- Profile Header -->
     <v-row class="profile-header">
       <v-col cols="12" sm="3">
         <v-avatar size="120" class="mb-3">
@@ -13,7 +12,6 @@
       </v-col>
     </v-row>
 
-    <!-- Profile Details -->
     <v-row>
       <v-col cols="12" md="6">
         <v-card class="pa-3">
@@ -35,44 +33,32 @@
       </v-col>
     </v-row>
 
-    <!-- User-Created Music Videos Table -->
     <v-row>
       <v-col cols="12">
         <v-card>
-          <v-card-title>User-Created Music Videos</v-card-title>
-          <v-data-table
-            :headers="headers"
-            :items="userVideos"
-            class="elevation-1"
-          ></v-data-table>
-        </v-card>
-      </v-col>
-    </v-row>
-
-    <!-- Favorite Music Videos Table -->
-    <v-row>
-      <v-col cols="12">
-        <v-card>
-          <v-card-title>Favorite Music Videos</v-card-title>
-          <v-data-table
-            :headers="headers"
-            :items="favoriteVideos"
-            class="elevation-1"
-          ></v-data-table>
+          <v-card-title>Your Songs</v-card-title>
+          <v-row>
+            <v-col cols="12" sm="6" md="4" v-for="song in userSongs" :key="song.id">
+              <SongCard :song="song" @songDeleted="fetchUserSongs"></SongCard>
+            </v-col>
+          </v-row>
         </v-card>
       </v-col>
     </v-row>
   </v-container>
 </template>
-
 <script>
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '@/firebase.js';
 import { store } from '@/store.js';
+import SongCard from '@/components/SongCard.vue';
 
 export default {
   name: 'MyProfile',
+  components: {
+    SongCard,
+  },
   data() {
     return {
       userProfile: {
@@ -81,24 +67,13 @@ export default {
         firstname: '',
         lastname: ''
       },
-      headers: [
-        { text: 'Video Title', value: 'title' },
-        { text: 'Artist', value: 'artist' },
-        { text: 'Date Added', value: 'dateAdded' }
-      ],
-      userVideos: [
-        { title: 'Sunset Chill', artist: 'DJ Calm', dateAdded: '2024-01-01' },
-        { title: 'Morning Rise', artist: 'Early Bird', dateAdded: '2024-02-15' }
-      ],
-      favoriteVideos: [
-        { title: 'Night Drive', artist: 'The Lonely Streets', dateAdded: '2023-12-11' },
-        { title: 'Beach Waves', artist: 'Ocean Sounds', dateAdded: '2023-12-20' }
-      ]
+      userSongs: []
     };
   },
   created() {
     onAuthStateChanged(auth, async (user) => {
       if (user) {
+        store.setUser(user);
         const userDoc = await this.fetchUserProfile(user.email);
         if (userDoc) {
           this.userProfile = {
@@ -108,6 +83,7 @@ export default {
             lastname: userDoc.lastname || ''
           };
         }
+        await this.fetchUserSongs(user.email);
       } else {
         store.setUser(null);
         this.$router.push('/login');
@@ -131,11 +107,23 @@ export default {
         console.error("Error fetching user document:", error);
         return null;
       }
+    },
+    async fetchUserSongs(email) {
+      try {
+        const songsCollection = collection(db, 'Songs');
+        const q = query(songsCollection, where('artist', '==', email));
+        const querySnapshot = await getDocs(q);
+        this.userSongs = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+      } catch (error) {
+        console.error("Error fetching user songs:", error);
+      }
     }
   }
 }
 </script>
-
 <style scoped>
 .profile-header {
   margin-bottom: 20px;
