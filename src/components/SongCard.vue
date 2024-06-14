@@ -5,7 +5,9 @@
         <video :src="song.url" controls @play="incrementViews"></video>
       </v-responsive>
       <v-card-title class="title">{{ song.title }}</v-card-title>
-      <v-card-subtitle class="subtitle">{{ song.artist }}</v-card-subtitle>
+      <v-card-subtitle class="subtitle">
+        <router-link :to="{ name: 'Channel', params: { email: song.artist } }" class="artist-link">{{ song.artist }}</router-link>
+      </v-card-subtitle>
       <v-card-text>
         <div><strong>Album:</strong> {{ song.album }}</div>
         <div><strong>Length:</strong> {{ song.length }} minutes</div>
@@ -205,3 +207,13 @@ export default {
   margin-top: 4px;
 }
 </style>
+<style scoped>
+.artist-link {
+  text-decoration: none;
+  color: #1976d2;
+}
+.artist-link:hover {
+  text-decoration: underline;
+}
+</style>
+

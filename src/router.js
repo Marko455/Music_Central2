@@ -2,11 +2,12 @@
 
 import { createRouter, createWebHistory } from 'vue-router'
 
-import Home from './views/Home.vue'
-import Login from './views/Login.vue'
-import Signup from './views/Signup.vue'
-import Profile from './views/Profile.vue'
+import Home from './views/Home.vue';
+import Login from './views/Login.vue';
+import Signup from './views/Signup.vue';
+import Profile from './views/Profile.vue';
 import CreateSong from './views/CreateSong.vue';
+import Channel from './views/Channel.vue';
 
 const routes = [
   {
@@ -33,6 +34,12 @@ const routes = [
     path: '/create',
     name: 'CreateSong',
     component: CreateSong
+  },
+  {
+    path: '/channel/:email',
+    name: 'Channel',
+    component: Channel,
+    props: true
   }
 ]
 
