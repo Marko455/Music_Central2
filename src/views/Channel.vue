@@ -1,114 +1,176 @@
 <template>
-    <v-container>
-      <v-row class="channel-header">
-        <v-col cols="12" sm="3">
-          <v-avatar size="120" class="mb-3">
-            <v-img :src="channelProfile.avatarUrl || 'https://via.placeholder.com/150'"></v-img>
-          </v-avatar>
-        </v-col>
-        <v-col cols="12" sm="9">
-          <h2 class="display-1">{{ channelProfile.username }}</h2>
-          <p class="subtitle-1">{{ channelProfile.email }}</p>
-          <div class="subscription-buttons">
-            <v-btn color="primary" @click="handleSubscribe">Subscribe</v-btn>
-            <v-btn color="error" @click="handleUnsubscribe">Unsubscribe</v-btn>
-          </div>
-        </v-col>
-      </v-row>
-  
-      <v-row>
-        <v-col cols="12" md="6">
-          <v-card class="pa-3">
-            <v-card-title>{{ channelProfile.firstname }}</v-card-title>
-            <v-card-subtitle>First Name</v-card-subtitle>
-          </v-card>
-        </v-col>
-        <v-col cols="12" md="6">
-          <v-card class="pa-3">
-            <v-card-title>{{ channelProfile.lastname }}</v-card-title>
-            <v-card-subtitle>Last Name</v-card-subtitle>
-          </v-card>
-        </v-col>
-      </v-row>
-  
-      <v-row>
-        <v-col cols="12">
-          <v-card>
-            <v-card-title>{{ channelProfile.username }}'s Songs</v-card-title>
-            <v-row>
-              <v-col cols="12" sm="6" md="4" v-for="song in userSongs" :key="song.id">
-                <SongCard :song="song"></SongCard>
-              </v-col>
-            </v-row>
-          </v-card>
-        </v-col>
-      </v-row>
-    </v-container>
-  </template>
-  
-  <script>
-  import { collection, query, where, getDocs } from 'firebase/firestore';
-  import { db } from '@/firebase.js';
-  import SongCard from '@/components/SongCard.vue';
-  
-  export default {
-    name: 'Channel',
-    components: {
-      SongCard,
-    },
-    data() {
-      return {
-        channelProfile: {
-          username: '',
-          email: '',
-          firstname: '',
-          lastname: '',
-          avatarUrl: ''
-        },
-        userSongs: []
-      };
-    },
-    async created() {
-      const userEmail = this.$route.params.email;
-      await this.fetchChannelProfile(userEmail);
-      await this.fetchUserSongs(userEmail);
-    },
-    methods: {
-      async fetchChannelProfile(email) {
-        try {
-          const usersCollection = collection(db, 'Users');
-          const q = query(usersCollection, where('email', '==', email));
-          const querySnapshot = await getDocs(q);
-          if (!querySnapshot.empty) {
-            const userDoc = querySnapshot.docs[0];
-            this.channelProfile = {
-              username: userDoc.data().username || '',
-              email: userDoc.data().email || email,
-              firstname: userDoc.data().firstname || '',
-              lastname: userDoc.data().lastname || '',
-              avatarUrl: userDoc.data().avatarUrl || ''
-            };
-          }
-        } catch (error) {
-          console.error("Error fetching channel profile:", error);
-        }
+  <v-container>
+    <v-row class="channel-header">
+      <v-col cols="12" sm="3">
+        <v-avatar size="120" class="mb-3">
+          <v-img src="https://via.placeholder.com/150"></v-img>
+        </v-avatar>
+      </v-col>
+      <v-col cols="12" sm="9">
+        <h2 class="display-1">{{ channelProfile.username }}</h2>
+        <p class="subtitle-1">{{ channelProfile.email }}</p>
+        <div class="subscriber-count">
+          <v-icon color="red">mdi-account-multiple</v-icon>
+          <span>{{ channelProfile.subscribers }} Subscribers</span>
+        </div>
+        <v-btn v-if="user" @click="subscribe" color="primary" :disabled="isSubscribed">
+          Subscribe
+        </v-btn>
+        <v-btn v-if="user" @click="unsubscribe" color="secondary" :disabled="!isSubscribed">
+          Unsubscribe
+        </v-btn>
+      </v-col>
+    </v-row>
+
+    <v-row>
+      <v-col cols="12">
+        <v-card class="pa-3">
+          <v-card-title>About</v-card-title>
+          <v-card-text>{{ channelProfile.about }}</v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <v-row>
+      <v-col cols="12">
+        <v-card>
+          <v-card-title>{{ channelProfile.username }}'s Music Videos</v-card-title>
+          <v-row>
+            <v-col cols="12" sm="6" md="4" v-for="song in userVideos" :key="song.id">
+              <SongCard :song="song"></SongCard>
+            </v-col>
+          </v-row>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
+</template>
+
+<script>
+import { onAuthStateChanged } from 'firebase/auth';
+import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { auth, db } from '@/firebase.js';
+import { store } from '@/store.js';
+import SongCard from '@/components/SongCard.vue';
+
+export default {
+  name: 'Channel',
+  components: {
+    SongCard
+  },
+  data() {
+    return {
+      channelProfile: {
+        username: '',
+        email: '',
+        about: '',
+        subscribers: 0
       },
-      async fetchUserSongs(email) {
-        try {
-          const songsCollection = collection(db, 'Songs');
-          const q = query(songsCollection, where('artist', '==', email));
-          const querySnapshot = await getDocs(q);
-          this.userSongs = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }));
-        } catch (error) {
-          console.error("Error fetching user songs:", error);
+      user: null,
+      isSubscribed: false,
+      userVideos: []
+    };
+  },
+  created() {
+    this.fetchChannelProfile();
+    onAuthStateChanged(auth, (user) => {
+      this.user = user ? user.email : null;
+      if (this.user) {
+        this.checkSubscription();
+      }
+    });
+  },
+  methods: {
+    async fetchChannelProfile() {
+      try {
+        const userEmail = this.$route.params.email;
+        const usersCollection = collection(db, 'Users');
+        const q = query(usersCollection, where('email', '==', userEmail));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          const userDoc = querySnapshot.docs[0];
+          const userData = userDoc.data();
+          this.channelProfile = {
+            username: userData.username || '',
+            email: userData.email || '',
+            about: userData.about || 'No information provided.',
+            subscribers: userData.subscribers || 0
+          };
+          this.channelProfileId = userDoc.id;
+          await this.fetchUserSongs(userEmail);
+        } else {
+          console.log("No such document!");
         }
+      } catch (error) {
+        console.error("Error fetching user document:", error);
+      }
+    },
+    async fetchUserSongs(email) {
+      try {
+        const songsCollection = collection(db, 'Songs');
+        const q = query(songsCollection, where('artist', '==', email));
+        const querySnapshot = await getDocs(q);
+        this.userVideos = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+      } catch (error) {
+        console.error("Error fetching user songs:", error);
+      }
+    },
+    async checkSubscription() {
+      try {
+        const subscriptionsRef = collection(db, 'Subscriptions');
+        const q = query(subscriptionsRef, where('subscriber', '==', this.user), where('subscribedTo', '==', this.channelProfile.email));
+        const querySnapshot = await getDocs(q);
+        this.isSubscribed = !querySnapshot.empty;
+      } catch (error) {
+        console.error("Error checking subscription status:", error);
+      }
+    },
+    async subscribe() {
+      if (this.isSubscribed) return;
+      try {
+        const channelDocRef = doc(db, 'Users', this.channelProfileId);
+        const newSubscriberCount = this.channelProfile.subscribers + 1;
+        await updateDoc(channelDocRef, {
+          subscribers: newSubscriberCount
+        });
+        this.channelProfile.subscribers = newSubscriberCount;
+        this.isSubscribed = true;
+
+        await updateDoc(doc(db, 'Subscriptions', `${this.user}_${this.channelProfile.email}`), {
+          subscriber: this.user,
+          subscribedTo: this.channelProfile.email
+        });
+
+      } catch (error) {
+        console.error("Error subscribing to user:", error);
+      }
+    },
+    async unsubscribe() {
+      if (!this.isSubscribed || this.channelProfile.subscribers <= 0) return;
+      try {
+        const channelDocRef = doc(db, 'Users', this.channelProfileId);
+        const newSubscriberCount = Math.max(this.channelProfile.subscribers - 1, 0);
+        await updateDoc(channelDocRef, {
+          subscribers: newSubscriberCount
+        });
+        this.channelProfile.subscribers = newSubscriberCount;
+        this.isSubscribed = false;
+
+        await updateDoc(doc(db, 'Subscriptions', `${this.user}_${this.channelProfile.email}`), {
+          subscriber: '',
+          subscribedTo: ''
+        });
+
+      } catch (error) {
+        console.error("Error unsubscribing from user:", error);
       }
     }
   }
-  </script>
+}
+</script>
 <style scoped>
 .channel-header {
   margin-bottom: 20px;
@@ -123,26 +185,29 @@
   color: #424242;
   padding: 16px;
 }
-.channel-header {
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+
+.v-card-text {
+  padding: 16px;
+  color: #666;
 }
 
-.subscription-buttons {
+.subscriber-count {
   display: flex;
-  gap: 10px;
+  align-items: center;
   margin-top: 10px;
 }
 
-.v-card {
-  margin-top: 20px;
+.subscriber-count v-icon {
+  margin-right: 5px;
 }
 
-.v-card-title {
-  background-color: #f5f5f5;
-  color: #424242;
-  padding: 16px;
+.subscriber-count span {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+}
+
+.v-btn {
+  margin-top: 10px;
 }
 </style>

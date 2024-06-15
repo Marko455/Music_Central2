@@ -9,6 +9,10 @@
       <v-col cols="12" sm="9">
         <h2 class="display-1">{{ userProfile.username }}</h2>
         <p class="subtitle-1">{{ userProfile.email }}</p>
+        <div class="subscriber-count">
+          <v-icon color="red">mdi-account-multiple</v-icon>
+          <span>{{ userProfile.subscribers }} Subscribers</span>
+        </div>
       </v-col>
     </v-row>
 
@@ -35,11 +39,20 @@
 
     <v-row>
       <v-col cols="12">
+        <v-card class="pa-3">
+          <v-card-title>About</v-card-title>
+          <v-card-text>{{ userProfile.about }}</v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <v-row>
+      <v-col cols="12">
         <v-card>
-          <v-card-title>Your Songs</v-card-title>
+          <v-card-title>User-Created Music Videos</v-card-title>
           <v-row>
-            <v-col cols="12" sm="6" md="4" v-for="song in userSongs" :key="song.id">
-              <SongCard :song="song" @songDeleted="fetchUserSongs"></SongCard>
+            <v-col cols="12" sm="6" md="4" v-for="song in userVideos" :key="song.id">
+              <SongCard :song="song" @songDeleted="removeDeletedSong"></SongCard>
             </v-col>
           </v-row>
         </v-card>
@@ -57,7 +70,7 @@ import SongCard from '@/components/SongCard.vue';
 export default {
   name: 'MyProfile',
   components: {
-    SongCard,
+    SongCard
   },
   data() {
     return {
@@ -65,25 +78,28 @@ export default {
         username: '',
         email: '',
         firstname: '',
-        lastname: ''
+        lastname: '',
+        about: '',
+        subscribers: 0 
       },
-      userSongs: []
+      userVideos: []
     };
   },
   created() {
     onAuthStateChanged(auth, async (user) => {
       if (user) {
-        store.setUser(user);
         const userDoc = await this.fetchUserProfile(user.email);
         if (userDoc) {
           this.userProfile = {
             username: userDoc.username || '',
             email: userDoc.email || user.email,
             firstname: userDoc.firstname || '',
-            lastname: userDoc.lastname || ''
+            lastname: userDoc.lastname || '',
+            about: userDoc.about || 'No information provided.',
+            subscribers: userDoc.subscribers || 0
           };
+          await this.fetchUserSongs(user.email);
         }
-        await this.fetchUserSongs(user.email);
       } else {
         store.setUser(null);
         this.$router.push('/login');
@@ -113,13 +129,16 @@ export default {
         const songsCollection = collection(db, 'Songs');
         const q = query(songsCollection, where('artist', '==', email));
         const querySnapshot = await getDocs(q);
-        this.userSongs = querySnapshot.docs.map(doc => ({
+        this.userVideos = querySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         }));
       } catch (error) {
         console.error("Error fetching user songs:", error);
       }
+    },
+    removeDeletedSong(songId) {
+      this.userVideos = this.userVideos.filter(song => song.id !== songId);
     }
   }
 }
@@ -137,5 +156,26 @@ export default {
   background-color: #f5f5f5;
   color: #424242;
   padding: 16px;
+}
+
+.v-card-text {
+  padding: 16px;
+  color: #666;
+}
+
+.subscriber-count {
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.subscriber-count v-icon {
+  margin-right: 5px;
+}
+
+.subscriber-count span {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
 }
 </style>
