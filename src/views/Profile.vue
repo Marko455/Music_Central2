@@ -9,10 +9,6 @@
       <v-col cols="12" sm="9">
         <h2 class="display-1">{{ userProfile.username }}</h2>
         <p class="subtitle-1">{{ userProfile.email }}</p>
-        <div class="subscriber-count">
-          <v-icon color="red">mdi-account-multiple</v-icon>
-          <span>{{ userProfile.subscribers }} Subscribers</span>
-        </div>
       </v-col>
     </v-row>
 
@@ -48,18 +44,34 @@
 
     <v-row>
       <v-col cols="12">
-        <v-card>
-          <v-card-title>User-Created Music Videos</v-card-title>
-          <v-row>
-            <v-col cols="12" sm="6" md="4" v-for="song in userVideos" :key="song.id">
-              <SongCard :song="song" @songDeleted="removeDeletedSong"></SongCard>
-            </v-col>
-          </v-row>
+        <v-card class="pa-3">
+          <v-card-title>Subscribers</v-card-title>
+          <v-card-text>
+            <span class="subscriber-count">{{ userProfile.subscribers }} Subscribers</span>
+          </v-card-text>
         </v-card>
       </v-col>
     </v-row>
+
+    <v-row>
+      <v-col cols="12">
+        <v-btn color="primary" @click="goToEditProfile">
+          Edit Profile
+        </v-btn>
+      </v-col>
+    </v-row>
+
+    <v-row>
+      <SongCard
+        v-for="song in userSongs"
+        :key="song.id"
+        :song="song"
+        @songDeleted="fetchUserSongs"
+      />
+    </v-row>
   </v-container>
 </template>
+
 <script>
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -68,10 +80,8 @@ import { store } from '@/store.js';
 import SongCard from '@/components/SongCard.vue';
 
 export default {
-  name: 'MyProfile',
-  components: {
-    SongCard
-  },
+  name: 'Profile',
+  components: { SongCard },
   data() {
     return {
       userProfile: {
@@ -80,9 +90,9 @@ export default {
         firstname: '',
         lastname: '',
         about: '',
-        subscribers: 0 
+        subscribers: 0
       },
-      userVideos: []
+      userSongs: []
     };
   },
   created() {
@@ -95,7 +105,7 @@ export default {
             email: userDoc.email || user.email,
             firstname: userDoc.firstname || '',
             lastname: userDoc.lastname || '',
-            about: userDoc.about || 'No information provided.',
+            about: userDoc.about || '',
             subscribers: userDoc.subscribers || 0
           };
           await this.fetchUserSongs(user.email);
@@ -129,20 +139,19 @@ export default {
         const songsCollection = collection(db, 'Songs');
         const q = query(songsCollection, where('artist', '==', email));
         const querySnapshot = await getDocs(q);
-        this.userVideos = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
+        this.userSongs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       } catch (error) {
         console.error("Error fetching user songs:", error);
+        this.userSongs = [];
       }
     },
-    removeDeletedSong(songId) {
-      this.userVideos = this.userVideos.filter(song => song.id !== songId);
+    goToEditProfile() {
+      this.$router.push({ name: 'EditProfile' });
     }
   }
-}
+};
 </script>
+
 <style scoped>
 .profile-header {
   margin-bottom: 20px;
@@ -158,24 +167,13 @@ export default {
   padding: 16px;
 }
 
-.v-card-text {
-  padding: 16px;
-  color: #666;
+.v-btn {
+  margin-top: 20px;
 }
 
 .subscriber-count {
-  display: flex;
-  align-items: center;
-  margin-top: 10px;
-}
-
-.subscriber-count v-icon {
-  margin-right: 5px;
-}
-
-.subscriber-count span {
-  font-size: 18px;
   font-weight: bold;
+  font-size: 18px;
   color: #333;
 }
 </style>

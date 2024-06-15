@@ -40,6 +40,14 @@ const routes = [
     name: 'Channel',
     component: Channel,
     props: true
+  },
+  {
+    path: '/edit-profile',
+    name: 'EditProfile',
+    component: () => import('@/views/EditProfile.vue'),
+    meta: {
+      requiresAuth: true
+    }
   }
 ]
 
