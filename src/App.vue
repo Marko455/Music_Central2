@@ -18,9 +18,6 @@
     <!-- Sidebar -->
     <v-navigation-drawer app v-model="drawer" temporary>
       <v-btn to="/profile" text class="sidebar-button">Moj profil</v-btn>
-      <v-btn to="#" text class="sidebar-button">Popularne pjesme</v-btn>
-      <v-btn to="#" text class="sidebar-button">Popularni bandovi</v-btn>
-      <v-btn to="#" text class="sidebar-button">Povijest</v-btn>
     </v-navigation-drawer>
 
     <!-- Main content -->

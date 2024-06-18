@@ -1,7 +1,7 @@
 <template>
   <v-container class="home-container">
     <div class="background">
-      <h1 class="welcome-text">Dobrodošli na Music Central!</h1>
+      <h1 class="welcome-text">Welcome to Music Central!</h1>
 
       <v-progress-circular
         v-if="loading"

@@ -2,7 +2,7 @@
   <v-col cols="12" sm="6" md="4">
     <v-card class="song-card">
       <v-responsive aspect-ratio="16/9">
-        <video :src="song.url" controls @play="incrementViews"></video>
+        <video :src="song.video" controls @play="incrementViews" class="video"></video>
       </v-responsive>
       <v-card-title class="title">{{ song.title }}</v-card-title>
       <v-card-subtitle class="subtitle">
@@ -10,7 +10,6 @@
       </v-card-subtitle>
       <v-card-text>
         <div><strong>Album:</strong> {{ song.album }}</div>
-        <div><strong>Length:</strong> {{ song.length }} minutes</div>
         <div><strong>Description:</strong> {{ song.description }}</div>
         <div><strong>Likes:</strong> {{ song.likes }}</div>
         <div><strong>Dislikes:</strong> {{ song.dislikes }}</div>
@@ -185,6 +184,7 @@ export default {
 
 .video {
   width: 100%;
+  height: 100%;
 }
 
 .comments-section {
@@ -207,6 +207,7 @@ export default {
   margin-top: 4px;
 }
 </style>
+
 <style scoped>
 .artist-link {
   text-decoration: none;
@@ -216,4 +217,3 @@ export default {
   text-decoration: underline;
 }
 </style>
-
