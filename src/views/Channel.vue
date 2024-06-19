@@ -13,10 +13,10 @@
           <v-icon color="red">mdi-account-multiple</v-icon>
           <span>{{ channelProfile.subscribers }} Subscribers</span>
         </div>
-        <v-btn v-if="user" @click="subscribe" color="primary" :disabled="isSubscribed">
+        <v-btn v-if="user && !isSubscribed" @click="subscribe" color="primary">
           Subscribe
         </v-btn>
-        <v-btn v-if="user" @click="unsubscribe" color="secondary" :disabled="!isSubscribed">
+        <v-btn v-if="user && isSubscribed" @click="unsubscribe" color="secondary">
           Unsubscribe
         </v-btn>
       </v-col>
@@ -43,12 +43,17 @@
         </v-card>
       </v-col>
     </v-row>
+
+    <!-- Snackbar for showing messages -->
+    <v-snackbar v-model="snackbar" :timeout="snackbarTimeout" color="success">
+      {{ snackbarMessage }}
+    </v-snackbar>
   </v-container>
 </template>
 
 <script>
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, updateDoc, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '@/firebase.js';
 import { store } from '@/store.js';
 import SongCard from '@/components/SongCard.vue';
@@ -68,7 +73,10 @@ export default {
       },
       user: null,
       isSubscribed: false,
-      userVideos: []
+      userVideos: [],
+      snackbar: false,
+      snackbarMessage: '',
+      snackbarTimeout: 3000
     };
   },
   created() {
@@ -139,10 +147,13 @@ export default {
         this.channelProfile.subscribers = newSubscriberCount;
         this.isSubscribed = true;
 
-        await updateDoc(doc(db, 'Subscriptions', `${this.user}_${this.channelProfile.email}`), {
+        await setDoc(doc(db, 'Subscriptions', `${this.user}_${this.channelProfile.email}`), {
           subscriber: this.user,
           subscribedTo: this.channelProfile.email
         });
+
+        this.snackbarMessage = 'Subscribed';
+        this.snackbar = true;
 
       } catch (error) {
         console.error("Error subscribing to user:", error);
@@ -159,10 +170,7 @@ export default {
         this.channelProfile.subscribers = newSubscriberCount;
         this.isSubscribed = false;
 
-        await updateDoc(doc(db, 'Subscriptions', `${this.user}_${this.channelProfile.email}`), {
-          subscriber: '',
-          subscribedTo: ''
-        });
+        await deleteDoc(doc(db, 'Subscriptions', `${this.user}_${this.channelProfile.email}`));
 
       } catch (error) {
         console.error("Error unsubscribing from user:", error);
@@ -171,6 +179,7 @@ export default {
   }
 }
 </script>
+
 <style scoped>
 .channel-header {
   margin-bottom: 20px;
